@@ -4,12 +4,12 @@ from threading import Thread
 
 
 
-
 def listen(client):
- string = "REPORT_REQUEST_FLAG=1\n" + "number of users: " + str(len(users)) + "\n"
+ string = "added"
  for i in users:
-    string = string + "ip = " + str(i[1]) + ", port= " + str(i[2]) + ", user name= " + i[3] + "\n"
+    string = string + "ip = " + str(i[1]) + ", port= " + str(i[2]) + ", user name= " + i[3] + "number of users " + str(len(users)) + "\n"
  print(string)
+
  while True:
     msg = client.recv(1024).decode()
 
@@ -19,17 +19,38 @@ def listen(client):
             for i in users:
                 string = string + "ip = " + str(i[1]) + " port= " + str(i[2]) + "user name= " + i[3] + "\n"
             print(string)
-            connectionSocket.send("hey".encode())
+            connectionSocket.send(string.encode())
+
+        if msg == "JOIN_REQUEST_FLAG":
+            user_name = client.recv(1024).decode()
+            for i in users:
+                if user_name == i[3]:
+                    string = "JOIN_REQUEST_FLAG = 0, " + user_name
+                    client.send(string.encode())
+                else:
+                    for i in users:
+                        if i[0] == client:
+                            i[3] = user_name
+                    string = "JOIN_REQUEST_FLAG = 1, " + user_name
+                    client.send(string.encode())
+
 
         if msg == "q":
             print("Client Disconnected")
-            users.remove(connectionSocket)
-            connectionSocket.close()
+            for i in users:
+                if i[0] == client:
+                    users.remove(i)
+                    client.close()
+            client.close()
 
     except:
 
         print("Error")
-        users.remove(connectionSocket)
+        for i in users:
+            if i[0] == client:
+                users.remove(i)
+                client.close()
+
     for connectionSocket in users:
         connectionSocket.send(msg.encode())
 
@@ -37,7 +58,7 @@ def listen(client):
 if __name__ == '__main__':
     users = []
 
-    server_port = 18002
+    server_port = 18003
     host_name = 'local host'
 
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -53,8 +74,7 @@ if __name__ == '__main__':
         connectionSocket, addr = serverSocket.accept()
         IP,Port = addr
         connectionSocket.send('succesfull server connection!\n'.encode())
-        user_name = connectionSocket.recv(1024).decode()
-        users.append((connectionSocket,IP,Port,user_name))
+        users.append((connectionSocket,IP,Port,""))
 
 
 
