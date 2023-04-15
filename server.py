@@ -1,15 +1,18 @@
 from socket import *
-serverName = 'localhost'
+users = {}
 serverPort = 18000
-clientSocket = socket(AF_INET, SOCK_STREAM)
-clientSocket.connect((serverName,serverPort))
-verify = clientSocket.recv(1024)
-address = clientSocket.recv(1024)
-print(verify.decode())
-print(address)
-while(1):
-        sentence = input('Enter username')
-        clientSocket.send(sentence.encode())
-        modifiedSentence = clientSocket.recv(1024)
-        print ('From Server:', modifiedSentence.decode())
-clientSocket.close()
+serverSocket = socket(AF_INET,SOCK_STREAM)
+serverSocket.bind(('',serverPort))
+serverSocket.listen(1)
+print ('The server is ready to receive')
+while 1:
+    connectionSocket, addr = serverSocket.accept()
+    connectionSocket.send('succesfull server connection!\n'.encode())
+    user_name = connectionSocket.recv(1024).decode()
+    users[addr] = user_name, port
+    print(users)
+    capitalizedSentence = sentence.upper()
+    connectionSocket.send(capitalizedSentence.encode())
+connectionSocket.close()
+
+
