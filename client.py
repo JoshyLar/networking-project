@@ -38,7 +38,7 @@ while True:
         break
 
     sentence = username + ": " + sentence
-    curr_time = datetime.now().strftime("[%H:%M] ")
+    curr_time = datetime.now().strftime("[%H:%M:%S] ")
     sentence = curr_time + sentence
 
     clientSocket.send(sentence.encode())
