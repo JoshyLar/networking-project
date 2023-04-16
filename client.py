@@ -1,127 +1,77 @@
-import socket
+from socket import *
 from threading import Thread
+from datetime import datetime
 
 
-def listen(client):
+
+#verify = clientSocket.recv(1024)
+#address = clientSocket.recv(1024)
+#print(verify.decode())
+#print(address)
+
+def send_msg(sentence):
+    # message sent with username and timestamp
+    sentence = user_name + ": " + sentence
+    curr_time = datetime.now().strftime("[%H:%M:%S] ")
+    sentence = curr_time + sentence
+
+    clientSocket.send(sentence.encode())
+
+def listen_chat(client):
     while True:
-        msg = client.recv(1024).decode()
-        if msg == "QUIT_REQUEST_FLAG":
-            client.send("QUIT_ACCEPT_FLAG".encode())
-            send(f"user {user_names[users.index(client)]} has left the chat".encode())
-            client.close()
-            print(f"user {user_names[users.index(client)]} quit")
-            user_names.remove(users.index(client))
-            users.remove(users.index(client))
-            print(f"Number of  users: {len(users)}")
-            break
-
-    else:
-        for user in users:
-            user.send(msg.encode())
-
-
-
-
-
-def send(msg):
-    for user in users:
-        user.send(msg).encode()
-
-def check_user_names(user_name):
-    if len(user_names) != 0:
-        for users in user_names:
-            print(users)
-            if user_name == users:
-                return 0
-    return 1
+        chat = client.recv(1024).decode()
+        print(chat)
 
 
 if __name__ == '__main__':
-    users = []
-    user_names = []
-    user_addr = []
-    messages = []
-    chat_room_size = 3
+    serverName = "localhost"
+    serverPort = 18003
 
-    server_port = 18003
-    host_name = 'local host'
+    # TCP
+    clientSocket = socket(AF_INET, SOCK_STREAM)
+    clientSocket.connect((serverName, serverPort))
+    user_name = ""
 
-    serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    name = socket.gethostname()
-    server_ip = socket.gethostbyname(name)  # get the server ip
-    serverSocket.bind(('', server_port))
-
-    print("server IP= ", server_ip, "port= ", server_port)
-    print('The server is ready to receive')
-    serverSocket.listen(3)
+    print("Connection Successful.")
+    print(clientSocket.recv(1024).decode())
+    print("Please Select an Option:")
+    print("Option 1: Get Chatroom Report")
+    print("Option 2: Join Chatroom")
+    print("Option 3: Quit Program")
 
     while True:
-        connectionSocket, addr = serverSocket.accept()
-        print("join requested")
-        connectionSocket.send('server connection acknowledged\n'.encode())
-        while True:
-            msg = connectionSocket.recv(1024).decode()
-            print(msg)
-
-            user_name_flag = 0
-
-            if msg == "JOIN_REQUEST_FLAG":
-                print("username requested")
-                if (len(users) > chat_room_size + 1):
-                    print("Chatroom full user rejected")
-                    connectionSocket.send('JOIN_REJECT_FLAG'.encode())
-                    connectionSocket.close()
-                connectionSocket.send("JOIN_REQUEST_FLAG = 1".encode())
-
-
-                while user_name_flag == 0:
-
-
-
-
-
-                    user_name = connectionSocket.recv(1024).decode()
-                    user_name_flag = check_user_names(user_name)
-                    if user_name_flag == 0:
-                        connectionSocket.send('JOIN_REJECT_FLAG'.encode())
-
+        msg = input("option:")
+        if msg == "2":
+            print("Option 2 selected")
+            clientSocket.send("JOIN_REQUEST_FLAG".encode())
+            msg = clientSocket.recv(1024).decode()
+            if msg == "JOIN_REQUEST_FLAG = 1":
+                flag = 0
+                while flag == 0:
+                    user_name = input("Choose username: ")
+                    clientSocket.send(user_name.encode())
+                    if clientSocket.recv(1024).decode() == "JOIN_ACCEPT_FLAG = 1":
+                        temp_thread = Thread(target=listen_chat, args=(clientSocket,))
+                        temp_thread.daemon = True
+                        temp_thread.start()
                     else:
-                        connectionSocket.send('JOIN_ACCEPT_FLAG = 1'.encode())
-                        send(f"{user_name} has joined the chat".encode())
-                        users.append(connectionSocket)
-                        user_names.append(user_name)
-                        user_addr.append(addr)
-                        if len(messages) != 0:
-                            history = ""
-                            for i in messages:
-                                history += history + i
-                            connectionSocket.send(history.encode())
-                        connectionSocket.send(f"Welcome to the chat {user_name}\n".encode())
-                        thread = Thread(target=listen, args=(connectionSocket,))
+                        print("username in use")
 
-                        thread.daemon = True
-
-                        thread.start()
-                        print(f"New user added. Number of  users: {len(users)}")
-                        break
-
-
-            elif msg == "REPORT_REQUEST_FLAG":
-                print("report requested")
-                if len(users) > 0:
-
-                    string = ""
-                    for i in range(len(user_names)):
-                        string += user_names[i] + " ip: " + user_addr[i][0] + " port: " + user_addr[i][0] + "\n"
-                        print(string)
-                    connectionSocket.send(string.encode())
-                else:
-                    connectionSocket.send('chat room empty'.encode())
-            elif msg == "QUIT_REQUEST_FLAG":
-                connectionSocket.send("QUIT_ACCEPT_FLAG".encode())
-                connectionSocket.close()
-                print(f"user {connectionSocket} connection terminated")
                 break
+            else:
+                print("Chat room full")
+                clientSocket.close()
+                exit()
+
+        elif msg == "1":
+            print("Option 1 selected")
+            clientSocket.send("REPORT_REQUEST_FLAG".encode())
+            print(clientSocket.recv(1024).decode())
+
+        elif msg == "3":
+            print("option 3 selected")
+            clientSocket.send("QUIT_REQUEST_FLAG".encode())
+            break
 
 
 
@@ -133,11 +83,20 @@ if __name__ == '__main__':
 
 
 
-    msg = ""
+# user options
+#while True:
+ #   sentence = input()
+  #  sentence = username + ": " + sentence
+  #  curr_time = datetime.now().strftime("[%H:%M:%S] ")
+   # sentence = curr_time + sentence
+   # clientSocket.send(sentence.encode())
 
 
-    for connectionSocket in users:
-        connectionSocket.close()
 
-    serverSocket.close()
+
+
+# close clientSocket
+    clientSocket.close()
+    temp_thread.join()
+    print("Socket Closed")
 
