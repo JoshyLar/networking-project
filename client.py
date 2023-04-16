@@ -9,23 +9,38 @@ from datetime import datetime
 #print(verify.decode())
 #print(address)
 
-def send_msg(sentence):
+def send_chat(clientSocket):
+    while True:
+        sentencew = ""
     # message sent with username and timestamp
-    sentence = user_name + ": " + sentence
-    curr_time = datetime.now().strftime("[%H:%M:%S] ")
-    sentence = curr_time + sentence
+        #sentence  =  input(f"{user_name}: " )
+        curr_time = datetime.now().strftime("[%H:%M:%S] ")
+        sentence = input()
 
-    clientSocket.send(sentence.encode())
+        if sentence.lower() != "#quit":
+                sentence = user_name + ": " + sentence
+                curr_time = datetime.now().strftime("[%H:%M:%S] ")
+                sentence = curr_time + sentence
+                clientSocket.send(sentence.encode())
+
+        elif sentence.lower() == "#quit":
+                clientSocket.send("QUIT_REQUEST_FLAG".encode())
+                break
+
+
 
 def listen_chat(client):
     while True:
         chat = client.recv(1024).decode()
-        print(chat)
+        if chat != "QUIT_ACCEPT_FLAG":
+            print(chat)
+        else:
+            break
 
 
 if __name__ == '__main__':
     serverName = "localhost"
-    serverPort = 18003
+    serverPort = 18000
 
     # TCP
     clientSocket = socket(AF_INET, SOCK_STREAM)
@@ -51,9 +66,15 @@ if __name__ == '__main__':
                     user_name = input("Choose username: ")
                     clientSocket.send(user_name.encode())
                     if clientSocket.recv(1024).decode() == "JOIN_ACCEPT_FLAG = 1":
-                        temp_thread = Thread(target=listen_chat, args=(clientSocket,))
-                        temp_thread.daemon = True
-                        temp_thread.start()
+                        print(f"user name selected = {user_name}")
+                        while True:
+                            listen_thread = Thread(target=listen_chat, args=(clientSocket,))
+                            send_thread = Thread(target=send_chat, args=(clientSocket,))
+                            listen_thread.daemon = True
+                            send_thread.daemon = True
+                            listen_thread.start()
+                            send_thread.start()
+                        break
                     else:
                         print("username in use")
 
@@ -71,6 +92,9 @@ if __name__ == '__main__':
         elif msg == "3":
             print("option 3 selected")
             clientSocket.send("QUIT_REQUEST_FLAG".encode())
+            print("Goodbye")
+            break
+        else:
             break
 
 
@@ -97,6 +121,4 @@ if __name__ == '__main__':
 
 # close clientSocket
     clientSocket.close()
-    temp_thread.join()
     print("Socket Closed")
-
