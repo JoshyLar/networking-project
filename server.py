@@ -1,5 +1,6 @@
 import socket
 from threading import Thread
+import os
 
 
 def listen(client):
@@ -14,6 +15,14 @@ def listen(client):
             users.remove(users.index(client))
             print(f"Number of  users: {len(users)}")
             break
+
+        # for sending attachments
+        if msg == "ATTACHMENT_FLAG":
+            client.send("ATTACHMENT_FLAG=0".encode())
+
+        if msg.lower().find("attachments/") != -1:
+            if os.path.exists(msg)  #not sure if this is complete path
+
 
     else:
         for user in users:
@@ -44,7 +53,7 @@ if __name__ == '__main__':
     messages = []
     chat_room_size = 3
 
-    server_port = 18000
+    server_port = 18001
     host_name = 'local host'
 
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -141,4 +150,3 @@ if __name__ == '__main__':
         connectionSocket.close()
 
     serverSocket.close()
-

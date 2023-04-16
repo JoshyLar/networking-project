@@ -1,6 +1,7 @@
 from socket import *
 from threading import Thread
 from datetime import datetime
+import os
 
 
 
@@ -26,7 +27,9 @@ def send_chat(clientSocket):
         elif sentence.lower() == "#quit":
                 clientSocket.send("QUIT_REQUEST_FLAG".encode())
                 break
-
+        # to send attachments
+        elif sentence.lower() == "#a":
+            clientSocket.send("ATTACHMENT_FLAG".encode())
 
 
 def listen_chat(client):
@@ -34,13 +37,16 @@ def listen_chat(client):
         chat = client.recv(1024).decode()
         if chat != "QUIT_ACCEPT_FLAG":
             print(chat)
+        elif chat == "ATTACHMENT_FLAG=0":
+            print("Please enter a file: ")
+
         else:
             break
 
 
 if __name__ == '__main__':
     serverName = "localhost"
-    serverPort = 18000
+    serverPort = 18001
 
     # TCP
     clientSocket = socket(AF_INET, SOCK_STREAM)
