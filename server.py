@@ -17,7 +17,8 @@ def listen(client):
 
     else:
         for user in users:
-            user.send(msg.encode())
+            if user != client:
+                user.send(msg.encode())
 
 
 
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     messages = []
     chat_room_size = 3
 
-    server_port = 18003
+    server_port = 18000
     host_name = 'local host'
 
     serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
