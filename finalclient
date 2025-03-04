@@ -7,26 +7,27 @@ import shutil
 
 
 
-
+# Function to send chat messages from the client
+# Handles special commands for quitting and sending attachments
 def send_chat(clientSocket):
     try:
         while True:
 
 
-            sentence = input()
+            sentence = input() #Get user input
             file_name = sentence
             file_path = sentence.split(".")
 
 
 
 
-            if sentence.lower() == "#q":
+            if sentence.lower() == "#q":  #Quit command for client
                 #clientSocket.send("QUIT_REQUEST_FLAG".encode())
                 print("goodbye send")
                 sys.exit(0)
 
 
-            elif sentence.lower() == "#a":
+            elif sentence.lower() == "#a":  #Send attachment command
                 clientSocket.send("ATTACHMENT_FLAG".encode())
                 sentence = input("Enter filename: ")
                 clientSocket.send(sentence.encode())
@@ -36,38 +37,38 @@ def send_chat(clientSocket):
 
 
 
-            elif sentence.lower() != "#q" and sentence.lower() != "#a" and file_path[0] !="ATTACHMENT_FLAG" :
+            elif sentence.lower() != "#q" and sentence.lower() != "#a" and file_path[0] !="ATTACHMENT_FLAG" :  #Otherwise, send normal chat message
                 clientSocket.send(sentence.encode())
-    except:
+    except:  #Close client socket if necessary
         clientSocket.close()
         sys.exit()
 
 
 
 
-
+# Function to listen for messages from the server
 def listen_chat(client):
 
         attachment_flag = 0
 
 
         while True:
-            chat = client.recv(1024).decode()
+            chat = client.recv(1024).decode()  # Receive messages from server
 
 
-            if chat == "QUIT_ACCEPT_FLAG":
+            if chat == "QUIT_ACCEPT_FLAG":  # Handle quit message from server
                 client.close()
                 print("goodbye")
                 sys.exit(0)
 
-            elif chat == "ATTACHMENT_FLAG = 0":
+            elif chat == "ATTACHMENT_FLAG = 0":  # Handle file sending
                 file_name = client.recv(1024).decode()
                 file = open(file_name, 'r')
                 data = file.read()
                 file.close()
                 clientSocket.send(data.encode())
 
-            elif chat == "ATTACHMENT_FLAG= 1":
+            elif chat == "ATTACHMENT_FLAG= 1":  # Handle file received, save chat to a file
                 file_name = client.recv(1024).decode()
                 data = client.recv(1024).decode()
                 file = open(file_name,'w')
@@ -78,7 +79,7 @@ def listen_chat(client):
 
 
             else:
-                print(chat)
+                print(chat)  # Print received chat messages
 
 
 
@@ -86,7 +87,7 @@ if __name__ == '__main__':
     serverName = "localhost"
     serverPort = 18005
 
-    # TCP
+    # TCP Socket
     clientSocket = socket(AF_INET, SOCK_STREAM)
     clientSocket.connect((serverName, serverPort))
     user_name = ""
@@ -100,7 +101,7 @@ if __name__ == '__main__':
 
     while True:
         msg = input("option:")
-        if msg == "2":
+        if msg == "2":  # Join Chatroom
             print("Option 2 selected")
             clientSocket.send("JOIN_REQUEST_FLAG".encode())
             msg = clientSocket.recv(1024).decode()
@@ -128,7 +129,7 @@ if __name__ == '__main__':
                     #send_thread.daemon = True
                     #listen_thread.start()
                     #send_thread.start()
-                    send_chat(clientSocket)
+                    send_chat(clientSocket)  # Start sending messages
             except:
                 clientSocket.close()
                 sys.exit(0)
@@ -137,12 +138,12 @@ if __name__ == '__main__':
                 clientSocket.close()
                 exit()
 
-        elif msg == "1":
+        elif msg == "1":  # Request chatroom report
             print("Option 1 selected")
             clientSocket.send("REPORT_REQUEST_FLAG".encode())
             print(clientSocket.recv(1024).decode())
 
-        elif msg == "3":
+        elif msg == "3":  # Quit program
             print("option 3 selected")
             clientSocket.send("QUIT_REQUEST_FLAG".encode())
             print("Goodbye")
